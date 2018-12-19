@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.css" rel="stylesheet">
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.js"></script>
+
+    <link rel="stylesheet" href="/static/summernote/summernote.css"
+          th:href="@{/summernote/summernote.css}">
+    <link rel="stylesheet" href="/static/summernote/summernote-bs3.css"
+          th:href="@{/summernote/summernote-bs3.css}">
+
+</head>
+<body>
+<button id="edit" class="btn btn-primary" onclick="edit()" type="button">Edit 1</button>
+<button id="save" class="btn btn-primary" onclick="save()" type="button">Save 2</button>
+<div id="summernote" class="summernote"></div>
+</body>
+<script src="/static/summernote/summernote.js" th:src="@{/summernote/summernote.js}"></script>
+
+<script src="/static/summernote/lang/summernote-zh-CN.js"
+        th:src="@{/summernote/lang/summernote-zh-CN.js}"></script>
+<!--页面JS-->
+<script type="text/javascript">
+    $(function () {
+        initSummernote();
+    });
+
+    var edit = function () {
+        $('.summernote').summernote({focus: true});
+    };
+
+    var save = function () {
+        var markup = $('.click2edit').summernote('code');
+        $('.summernote').summernote('destroy');
+    };
+
+    //调用富文本编辑
+    function initSummernote() {
+        var height = $(window).height() / 1.5;
+        $summernote = $('#summernote').summernote({
+            height: height,
+            minHeight: null,
+            lang: 'zh-CN',
+            maxHeight: null,
+            dialogsFade: true,
+            focus: true,
+            callbacks:
+                {
+                    //调用图片上传
+                    onImageUpload: function (files) {
+                        sendFile($summernote, files[0]);
+                    },
+                    //编辑器中删除图片同步删除
+                    onMediaDelete: function (target) {
+                        var imgSrc = target.context.currentSrc;
+                        $.ajax({
+                            data: {
+                                imgUrl: imgSrc
+                            },
+                            type: "DELETE",
+                            url: "/image",
+                            dataType: "json",
+                            success: function (data) {
+                                console.log(data);
+                            }
+                        });
+                    }
+                }
+        });
+
+    }
+
+    //ajax上传图片
+    function sendFile($summernote, file) {
+        var formData = new FormData();
+        formData.append("file", file);
+        $.ajax({
+            url: "/image",//路径是你控制器中上传图片的方法
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                $summernote.summernote('insertImage', data, function ($image) {
+                    $image.attr('src', data);
+                });
+            }
+        });
+    }
+
+</script>
+</html>
